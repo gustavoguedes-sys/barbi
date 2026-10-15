@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Inspeção Geométrica IoT</title>
+  <!-- Biblioteca Paho MQTT para Navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      background-color: #eef2f5;
+      padding-top: 60px;
+    }
+    .card {
+      display: inline-block;
+      width: 380px;
+      padding: 30px;
+      border-radius: 15px;
+      background: white;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 5px;
+    }
+    p {
+      color: #666;
+      font-size: 14px;
+    }
+    .status-box {
+      font-size: 22px;
+      font-weight: bold;
+      margin-top: 25px;
+      padding: 20px;
+      border-radius: 10px;
+      color: white;
+      background-color: #6c757d;
+      transition: all 0.3s ease;
+    }
+    /* Estilização dinâmica por geometria */
+    .quadrado { background-color: #28a745; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); }
+    .circulo  { background-color: #007bff; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4); }
+    .triangulo{ background-color: #fd7e14; box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4); }
+    .nenhum   { background-color: #dc3545; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Inspeção Geométrica</h2>
+    <p>Monitoramento IoT via HiveMQ WebSocket</p>
+    <div id="status" class="status-box nenhum">Aguardando peça...</div>
+  </div>
+
+  <script>
+    // Conexão WSS (WebSocket Seguro) com o Broker HiveMQ na porta 8884
+    const client = new Paho.MQTT.Client("broker.hivemq.com", 8884, "web_client_" + Math.random());
+
+    client.onConnectionLost = function (responseObject) {
+      console.log("Conexão perdida: " + responseObject.errorMessage);
+    };
+
+    client.onMessageArrived = function (message) {
+      const statusDiv = document.getElementById("status");
+      const forma = message.payloadString;
+
+      if (forma === "QUADRADO") {
+        statusDiv.innerText = "Forma: Quadrado";
+        statusDiv.className = "status-box quadrado";
+      } else if (forma === "CIRCULO") {
+        statusDiv.innerText = "Forma: Círculo";
+        statusDiv.className = "status-box circulo";
+      } else if (forma === "TRIANGULO") {
+        statusDiv.innerText = "Forma: Triângulo";
+        statusDiv.className = "status-box triangulo";
+      } else {
+        statusDiv.innerText = "Sem Peça / Desconhecida";
+        statusDiv.className = "status-box nenhum";
+      }
+    };
+
+    // Ativa SSL para compatibilidade com o HTTPS do GitHub Pages
+    client.connect({
+      useSSL: true,
+      onSuccess: function () {
+        console.log("Conectado ao HiveMQ via WebSocket Seguro!");
+        client.subscribe("escola/inspecao/geometria");
+      }
+    });
+  </script>
+</body>
+</html>
